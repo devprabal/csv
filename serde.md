@@ -18,7 +18,7 @@ day, zone, st, et, workedFlag, enabledFlag, actuatorDetail
 
 | field | format | valid values `[]` | not valid values `[]` |
 | - | - | - | - |
-| day | ddd | [ mon, tue, sat, sun, wed, thu ] | [ Mon, MON, T, Th, Fri ]
+| day | ddd | [ Mon, Tue, Sat, Sun, Wed, Thu ] | [ mon, MON, T, Th, fri ]
 | zone | regex format `^z[123]{1}$` | [z1, z2, z3] | [zone1, zone2, zone3, z12, z23, dhw, z34, z4, z5 ] |
 | st | HH:MM (UTC, 24h) | [ 10:33, 04:51, 22:44, 00:12 ] | [ 4:12, 6:15, 23:1, 24:01, 0:02, 23:60, 04:67 ] |
 | et | HH:MM (UTC, 24h) | [ 10:33, 04:51, 22:44, 00:12 ] | [ 4:12, 6:15, 23:1, 24:01, 0:02, 23:60, 04:67 ] |
