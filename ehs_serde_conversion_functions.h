@@ -23,7 +23,20 @@ struct Ehs_Sched_Serde_Conversion_Funcs {
     convert_worked_flag_func_t worked_flag_converter;
     convert_enabled_flag_func_t enabled_flag_converter;
     convert_actuator_detail_func_t actuator_detail_converter;
+
+    uint32_t day_buf_size;
+    uint32_t zone_buf_size;
+    uint32_t start_time_buf_size;
+    uint32_t end_time_buf_size;
+    uint32_t worked_flag_buf_size;
+    uint32_t enabled_flag_buf_size;
+    uint32_t actuator_detail_buf_size;
 };
+
+// typedef struct Ehs_Sched_Serde_Conversion_Buf_Sizes Ehs_Sched_Serde_Conversion_Buf_Sizes;
+// struct Ehs_Sched_Serde_Conversion_Buf_Sizes {
+
+// };
 
 void ehs_serde_set_conversion_functions(Ehs_Sched_Serde_Conversion_Funcs conversion_funcs);
 Ehs_Sched_Serde_Conversion_Funcs ehs_serde_get_conversion_functions(void);
