@@ -32,3 +32,18 @@ struct Ehs_Sched_Serde_Rep {
     bool enabled_flag;
     Ehs_Sched_Actuator_Detail actuator_detail;
 };
+
+bool set_expected_len_one_csv_row(size_t bytes);
+bool set_expected_csv_cols(size_t n_cols);
+size_t get_expected_len_one_csv_row(void);
+size_t get_expected_csv_cols(void);
+typedef bool(*generic_conversion_func_t)(void* in, char* out, uint8_t out_buf_size);
+
+typedef struct CSV_Col CSV_Col;
+struct CSV_Col {
+    generic_conversion_func_t conversion_func;
+    uint32_t out_buf_size;
+};
+
+bool init_one_csv_row(size_t n_cols);
+bool set_all_conversion_funcs(size_t n_funcs, generic_conversion_func_t conversion_funcs[n_funcs], uint32_t out_buf_sizes[n_funcs]);

@@ -37,6 +37,17 @@ struct Ehs_Sched_Serde_Conversion_Funcs {
 // struct Ehs_Sched_Serde_Conversion_Buf_Sizes {
 
 // };
+typedef enum FIELD_NAMES {
+    DAY,
+    ZONE,
+    START_TIME,
+    END_TIME,
+    WORKED_FLAG,
+    ENABLED_FLAG,
+    ACTUATOR_DETAIL,
+} FIELD_NAMES;
 
 void ehs_serde_set_conversion_functions(Ehs_Sched_Serde_Conversion_Funcs conversion_funcs);
 Ehs_Sched_Serde_Conversion_Funcs ehs_serde_get_conversion_functions(void);
+void set_all_user_defined_conversion_funcs_and_buf_sizes(void);
+void* return_field_data_from_rep(void* obj_in, FIELD_NAMES field_name);

@@ -114,6 +114,26 @@ static Ehs_Sched_Serde_Conversion_Funcs default_conversion_funcs = {
 #define EHS_SERDE_SET_CONVERSION_MEMBER(custom, default) \
 do {  if(custom) default = custom; } while (false);
 
+#include "ehs_sched_serde.h"
+generic_conversion_func_t field_conversion_funcs[] = {
+    [DAY] = convert_day,
+    [ZONE] = convert_zone,
+    [START_TIME] = convert_start_time,
+    [END_TIME] = convert_end_time,
+    [WORKED_FLAG] = convert_worked_flag,
+    [ENABLED_FLAG] = convert_enabled_flag,
+    [ACTUATOR_DETAIL] = convert_actuator_detail,
+};
+
+uint32_t field_sizes[] = {
+    [DAY] = DAY_BUF_SIZE,
+    [ZONE] = ZONE_BUF_SIZE,
+    [START_TIME] = START_TIME_BUF_SIZE,
+    [END_TIME] = END_TIME_BUF_SIZE,
+    [WORKED_FLAG] = WORKED_FLAG_BUF_SIZE,
+    [ENABLED_FLAG] = ENABLED_FLAG_BUF_SIZE,
+    [ACTUATOR_DETAIL] = ACTUATOR_DETAIL_BUF_SIZE,
+};
 
 void ehs_serde_set_conversion_functions(Ehs_Sched_Serde_Conversion_Funcs conversion_funcs)
 {
@@ -126,8 +146,48 @@ void ehs_serde_set_conversion_functions(Ehs_Sched_Serde_Conversion_Funcs convers
     EHS_SERDE_SET_CONVERSION_MEMBER(conversion_funcs.actuator_detail_converter, default_conversion_funcs.actuator_detail_converter);
 }
 
+void set_all_user_defined_conversion_funcs_and_buf_sizes(void)
+{
+    size_t n_funcs = sizeof(field_conversion_funcs) / sizeof (field_conversion_funcs [0]);
+    set_all_conversion_funcs(n_funcs, field_conversion_funcs, field_sizes);
+}
+
 Ehs_Sched_Serde_Conversion_Funcs ehs_serde_get_conversion_functions(void)
 {
     Ehs_Sched_Serde_Conversion_Funcs conversion_funcs = default_conversion_funcs;
     return conversion_funcs;
+}
+
+void* return_field_data_from_rep(void* obj_in, FIELD_NAMES field_name)
+{
+    Ehs_Sched_Serde_Rep* obj_cast = (Ehs_Sched_Serde_Rep*)obj_in;
+    if(field_name <= ACTUATOR_DETAIL && field_name >= DAY && obj_cast)
+    {
+        switch (field_name)
+        {
+        case DAY:
+            return obj_cast->day;
+            break;
+        case ZONE:
+            return obj_cast->zone;
+            break;
+        case START_TIME:
+            return &(obj_cast->start_time);
+            break;
+        case END_TIME:
+            return &(obj_cast->end_time);
+            break;
+        case WORKED_FLAG:
+            return &(obj_cast->worked_flag);
+            break;
+        case ENABLED_FLAG:
+            return &(obj_cast->enabled_flag);
+            break;
+        case ACTUATOR_DETAIL:
+            return &(obj_cast->actuator_detail);
+            break;
+        default:
+            break;
+        }
+    }
 }

@@ -1,5 +1,9 @@
 #include "ehs_sched_serde.h"
 #include "ehs_serde_conversion_functions.h"
+#include <string.h> //// strncat
+size_t EXPECTED_CSV_COLS = 1;
+size_t EXPECTED_LEN_ONE_CSV_ROW = 40; //// bytes
+CSV_Col** one_csv_row = 0;
 
 typedef struct Ehs_Sched_Internal_CSV_Rep Ehs_Sched_Internal_CSV_Rep;
 struct Ehs_Sched_Internal_CSV_Rep {
@@ -177,7 +181,8 @@ bool Ehs_Sched_serialize_to_csv_file(Ehs_Sched_Serde_Rep* data, uint32_t n_rows,
     return false;
 }
 
-int main(void)
+/*
+void test_v1(void)
 {
     snprintf(csv_items[0].day, 4, "%s", "Mon");
     snprintf(csv_items[0].zone, 3, "%s", "z1");
@@ -205,5 +210,136 @@ int main(void)
 
     Ehs_Sched_serialize_to_csv_file(csv_items, 3, 7);
     free_one_csv_rep_obj(&lib_data_one_row);
+}
+*/
+
+Ehs_Sched_Serde_Rep obj[3] = {
+    [0] = {.day = "Sat", .zone = "z1", .start_time = {.tm_hour = 13, .tm_min = 2}, .end_time = {.tm_hour = 14, .tm_min = 9}, .worked_flag = 0, .enabled_flag = 1, .actuator_detail = {.mode = 0x42, .power = 0xF0, .temperature = 0x072D}},
+    [1] = {.day = "Wed", .zone = "z1", .start_time = {.tm_hour = 3, .tm_min = 23}, .end_time = {.tm_hour = 11, .tm_min = 3}, .worked_flag = 1, .enabled_flag = 1, .actuator_detail = {.mode = 0x32, .power = 0x0F, .temperature = 0x081D}},
+    [2] = {.day = "Mon", .zone = "z2", .start_time = {.tm_hour = 21, .tm_min = 2}, .end_time = {.tm_hour = 23, .tm_min = 9}, .worked_flag = 0, .enabled_flag = 1, .actuator_detail = {.mode = 0x22, .power = 0xF0, .temperature = 0x062D}},
+};
+
+void* get_item_from_user_rep(size_t index)
+{
+    if(index < 3) return &(obj[index]);
     return 0;
+}
+
+void* get_field_from_user_item(void* obj, size_t member_index)
+{
+    return return_field_data_from_rep(obj, member_index);
+}
+
+bool Ehs_Sched_serialize_to_csv_file_v2(uint32_t n_rows, uint32_t n_columns)
+{
+    if(0 == n_rows || 0 == n_columns) return false;
+
+    FILE* fptr = NULL;
+    fptr = fopen(EHS_SCHED_CSV_FILE_NEW, "w");
+
+    uint32_t built_string_size = (3 * get_expected_len_one_csv_row()) + 1; //// '%s,'
+    char built_string[built_string_size];
+    uint32_t bstr_idx = 0;
+    built_string[bstr_idx] = '\0';
+
+    for(uint32_t row = 0; row < n_rows; row++)
+    {
+        for(uint32_t col = 0; col < n_columns; col++)
+        {
+            void* usr_field_data = get_field_from_user_item(get_item_from_user_rep(row), col);
+            uint32_t tsize;
+            char out[tsize];
+            one_csv_row[row]->conversion_func(usr_field_data, out, tsize);
+            //// TODO: srid replace strncat with snprintf
+            strncat(built_string, out, tsize);
+            bstr_idx += tsize;
+            strncat(built_string, ", ", 2);
+            bstr_idx += 2;
+        }
+        fptr = fopen(EHS_SCHED_CSV_FILE_NEW, "w");
+        if(fptr)
+        {
+            fprintf(fptr, "%s\n", built_string);
+        }
+        bstr_idx = 0;
+        built_string[bstr_idx] = '\0';
+    }
+    fclose(fptr);
+    
+    return true;
+}
+
+void test_v2(void)
+{
+    set_expected_len_one_csv_row(40);
+    set_expected_csv_cols(7);
+    set_all_user_defined_conversion_funcs_and_buf_sizes();
+    Ehs_Sched_serialize_to_csv_file_v2(3,7);
+}
+
+int main(void)
+{
+    // test_v1();
+    test_v2();
+    return 0;
+}
+
+bool set_expected_len_one_csv_row(size_t bytes)
+{
+    //// 120 lines with 200 bytes per line ~23.5 kB file size
+    //// Assumption: keep csv file size within 25 kB
+    if(bytes <= 200) {
+        EXPECTED_LEN_ONE_CSV_ROW = bytes;
+        return true;
+    } else {
+        printf("\nOh you must be joking! Reduce line len to <= 200 bytes.\n");
+        return false;
+    }
+}
+
+size_t get_expected_len_one_csv_row(void)
+{
+    return EXPECTED_LEN_ONE_CSV_ROW;
+}
+
+bool set_expected_csv_cols(size_t n_cols)
+{
+    //// 120 lines with 200 bytes per line ~23.5 kB file size
+    //// Assumption: keep csv file size within 25 kB
+    //// Assumption: csv line format: `item1,item2,item3,`
+    //// There can be 100 columns of 1 byte each to make a max of 200 bytes per line
+    if(n_cols <= 100) {
+        EXPECTED_CSV_COLS = n_cols;
+        return true;
+    } else {
+        printf("\nOh you must be joking! Reduce number of columns to <= 100.\n");
+        return false;
+    }
+}
+size_t get_expected_csv_cols(void)
+{
+    return EXPECTED_CSV_COLS;
+}
+
+bool init_one_csv_row(size_t n_cols)
+{
+    one_csv_row = calloc(n_cols, sizeof(CSV_Col*));
+    for(size_t i = 0; i < n_cols; i++) {
+        one_csv_row[i] = calloc(1, sizeof(CSV_Col));
+    }
+    return true;
+}
+
+bool set_all_conversion_funcs(size_t n_funcs, generic_conversion_func_t conversion_funcs[n_funcs], uint32_t out_buf_sizes[n_funcs])
+{
+    if(!one_csv_row) {
+        init_one_csv_row(n_funcs);
+    }
+    for(size_t i = 0; i < n_funcs; i++) {
+        if(one_csv_row[i]) {
+            one_csv_row[i]->conversion_func = conversion_funcs[i];
+            one_csv_row[i]->out_buf_size = out_buf_sizes[i];
+        }
+    }
+    return true;
 }
